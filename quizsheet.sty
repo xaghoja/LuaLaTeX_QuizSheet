@@ -1,0 +1,256 @@
+%% quizsheet.sty
+%% Copyright (c) 2026 Xaghoja
+%%
+%% This style file was created with the assistance of GitHub Copilot.
+%%
+%% This software is released under the MIT License.
+%% http://opensource.org/licenses/mit-license.php
+%%
+%% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{quizsheet}[2026/03/29 Quiz sheet table style]
+
+\RequirePackage{array}
+\RequirePackage{amsmath}
+\RequirePackage{longtable}
+\RequirePackage{etoolbox}
+\RequirePackage{url}
+\RequirePackage[table]{xcolor}
+
+% longtable spacing
+\setlength{\LTpre}{0pt}
+\setlength{\LTpost}{0pt}
+
+% ====================
+% Settings
+% ====================
+% 表の幅の設定
+\newlength{\QuizQuestionW}
+\newlength{\QuizAnswerW}
+\newlength{\QuizCommentW}
+\newlength{\QuizNoW}
+\newlength{\QuizInnerQuestionW}
+\newlength{\QuizInnerAnswerW}
+\newlength{\QuizInnerShift}
+\newlength{\QuizInnerPad}
+\setlength{\QuizQuestionW}{13cm}
+\setlength{\QuizAnswerW}{3cm}
+\setlength{\QuizCommentW}{0pt}
+\setlength{\QuizNoW}{6mm}
+\setlength{\QuizInnerShift}{6pt}
+\setlength{\QuizInnerPad}{4pt}
+
+% Counter
+\newcounter{question}
+\renewcommand{\thequestion}{\arabic{question}}
+
+% State
+\newif\ifquiz@open
+\quiz@openfalse
+\newcommand{\quiz@subtitle}{}
+
+% Title helpers
+\newcommand{\@subtitle}{}
+\newcommand{\subtitle}[1]{\gdef\@subtitle{#1}}
+\newcommand{\@license}{}
+\newcommand{\license}[1]{\gdef\@license{#1}}
+\let\quiz@orig@maketitle\maketitle
+\newcommand{\quiz@savedtitle}{}
+\newcommand{\quiz@saveddate}{}
+\renewcommand{\maketitle}{%
+  \let\quiz@savedtitle\@title
+  \let\quiz@saveddate\@date
+  \ifstrempty{\@subtitle}{}{%
+    \gdef\@title{\quiz@savedtitle\\\large \@subtitle}%
+  }%
+  \ifstrempty{\@license}{}{%
+    \ifstrempty{\quiz@saveddate}{%
+      \gdef\@date{\vfill {\small \@license}}%
+    }{%
+      \gdef\@date{\quiz@saveddate\vfill {\small \@license}}%
+    }%
+  }%
+  \quiz@orig@maketitle
+  \global\let\@title\quiz@savedtitle
+  \global\let\@date\quiz@saveddate
+}
+
+\newcommand{\quiz@recalcwidths}{%
+  \setlength{\QuizCommentW}{\dimexpr\QuizQuestionW+\QuizAnswerW+2\tabcolsep+\arrayrulewidth\relax}%
+  \setlength{\QuizInnerAnswerW}{\dimexpr(\QuizCommentW-\arrayrulewidth-2\QuizInnerPad)*2/10\relax}%
+  \setlength{\QuizInnerQuestionW}{\dimexpr\QuizCommentW-\arrayrulewidth-2\QuizInnerPad-\QuizInnerAnswerW\relax}%
+}
+\quiz@recalcwidths
+
+\newcommand{\quizsetwidths}[3]{%
+  \setlength{\QuizQuestionW}{#1}%
+  \setlength{\QuizAnswerW}{#2}%
+  \quiz@recalcwidths%
+}
+
+\newcommand{\quizsetinnerwidths}[2]{%
+  \setlength{\QuizInnerQuestionW}{#1}%
+  \setlength{\QuizInnerAnswerW}{#2}%
+  \setlength{\QuizQuestionW}{\dimexpr\QuizInnerQuestionW+\QuizInnerPad-\tabcolsep\relax}%
+  \setlength{\QuizAnswerW}{\dimexpr\QuizInnerAnswerW+\QuizInnerPad-\tabcolsep\relax}%
+  \setlength{\QuizCommentW}{\dimexpr\QuizQuestionW+\QuizAnswerW+2\tabcolsep+\arrayrulewidth\relax}%
+}
+
+% ====================
+% Layout
+% ====================
+\newcolumntype{N}{>{\raggedleft\arraybackslash}p{\QuizNoW}}
+\newcolumntype{B}{>{\raggedright\arraybackslash}p{\QuizQuestionW}}
+\newcolumntype{C}{>{\raggedright\arraybackslash}p{\QuizAnswerW}}
+
+\newlength{\QuizSavedRuleW}
+\newcommand{\thickhline}{%
+  \noalign{\global\setlength{\QuizSavedRuleW}{\arrayrulewidth}%
+           \global\setlength{\arrayrulewidth}{1.2pt}}%
+  \hline
+  \noalign{\global\setlength{\arrayrulewidth}{\QuizSavedRuleW}}%
+}
+
+\newcommand{\quiz@starttable}[1]{%
+  \def\quiz@subtitle{#1}%
+  \quiz@opentrue
+  \begin{longtable}{|N|B|C|}
+  \ifstrempty{#1}{}{%
+    \hline
+    \rowcolor[HTML]{DDDDDD}
+    \multicolumn{3}{|l|}{#1} \\ \hline
+  }
+  \hline
+  \rowcolor{black}
+  \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
+    & \multicolumn{2}{c|}{\cellcolor{black}{\color{white}%
+        \makebox[\dimexpr\QuizInnerQuestionW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{問題}}%
+        \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{正解}}%
+      }} \\ \hline
+  \endfirsthead
+
+  %% 改ページ後にもsubsectionの内容を記すか？ オプション。
+  % \ifdefempty{\quiz@subtitle}{}{%
+  %   \hline
+    % \multicolumn{3}{|l|}{続：\quiz@subtitle} \\ \hline
+  % }
+  \hline
+  \rowcolor{black}
+  \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
+    & \multicolumn{2}{c|}{\cellcolor{black}{\color{white}%
+        \makebox[\dimexpr\QuizInnerQuestionW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{問題}}%
+        \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{正解}}%
+      }} \\ \hline
+  \endhead
+
+  \hline
+  \endfoot
+
+  \endlastfoot
+}
+
+\newcommand{\quiz@innernoexp}[2]{%
+  \makebox[\linewidth][l]{%
+    \hspace*{-\QuizInnerShift}%
+    \begin{tabular*}{\dimexpr\linewidth+\QuizInnerShift\relax}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\QuizInnerQuestionW}!{\vrule width \arrayrulewidth}>{\raggedright\arraybackslash}p{\QuizInnerAnswerW}@{\hspace{\QuizInnerPad}}}
+      #1 & #2 \\
+    \end{tabular*}%
+  }%
+}
+
+\newcommand{\quiz@innerwith}[3]{%
+  \makebox[\linewidth][l]{%
+    \hspace*{-\QuizInnerShift}%
+    \begin{tabular*}{\dimexpr\linewidth+\QuizInnerShift\relax}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\QuizInnerQuestionW}!{\vrule width \arrayrulewidth}>{\raggedright\arraybackslash}p{\QuizInnerAnswerW}@{\hspace{\QuizInnerPad}}}
+      #1 & #2 \\
+      \cline{1-2}
+      \multicolumn{2}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\dimexpr\linewidth-2\QuizInnerPad+2\tabcolsep\relax}@{\hspace{\QuizInnerPad}}}{#3} \\
+    \end{tabular*}%
+  }%
+}
+
+%% [以上。]はサンプル。好きに変えていただきたい。
+\newcommand{\quiz@innerend}{%
+  \makebox[\linewidth][l]{%
+    \hspace*{-\QuizInnerShift}%
+    \begin{tabular*}{\dimexpr\linewidth+\QuizInnerShift\relax}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\QuizInnerQuestionW}>{\raggedleft\arraybackslash}p{\QuizInnerAnswerW}@{\hspace{\QuizInnerPad}}}
+      {} & 以上。 \\
+    \end{tabular*}%
+  }%
+}
+
+\newcommand{\quiz@endmarkerrow}{%
+  \multicolumn{1}{>{\raggedleft\arraybackslash}p{\QuizNoW}}{}
+    & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}}{\quiz@innerend} \\
+}
+
+\newcommand{\quiz@numcell}{%
+  \refstepcounter{question}\thequestion
+}
+
+\newcommand{\quiz@beforequestion}{%
+  \ifhmode
+    \unskip\par\medskip
+  \fi
+}
+
+% ====================
+% API
+% ====================
+
+\newcommand{\quizend}{%
+  \ifquiz@open
+    \quiz@endmarkerrow
+    \end{longtable}%
+    \quiz@openfalse
+  \fi
+}
+
+\newcommand{\quizclose}{%
+  \ifquiz@open
+    \end{longtable}%
+    \quiz@openfalse
+  \fi
+}
+
+%% section/subsectionを跨ぐ際は、問題表を閉じる（以上。は挿入しない）。
+\pretocmd{\clearpage}{\quizclose}{}{}
+\pretocmd{\section}{\quizclose\setcounter{question}{0}}{}{}
+\newcommand{\quiz@onsubsection}{%
+  \ifquiz@open
+    \quizclose
+  \fi
+}
+\pretocmd{\subsection}{\quiz@onsubsection}{}{}
+
+\newcommand{\quizsection}[1]{%
+  \ifquiz@open
+    \end{longtable}%
+    \quiz@openfalse
+  \fi
+  \quiz@starttable{#1}%
+}
+
+% subsubsectionの機能の振り直し。
+\renewcommand{\subsubsection}[1]{%
+  \quizsection{#1}%
+}
+
+\newcommand{\question}[3]{%
+  \quiz@beforequestion
+  \ifquiz@open\else
+    \quiz@starttable{}%
+  \fi
+  \ifstrempty{#3}{%
+    \multicolumn{1}{|>{\raggedleft\arraybackslash}p{\QuizNoW}||}{\quiz@numcell}
+      & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}|}{\quiz@innernoexp{#1}{#2}} \\
+    \thickhline
+  }{%
+    \multicolumn{1}{|>{\raggedleft\arraybackslash}p{\QuizNoW}||}{\quiz@numcell}
+      & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}|}{\quiz@innerwith{#1}{#2}{#3}} \\
+    \thickhline
+  }%
+}
+
+\AtEndDocument{\quizend}

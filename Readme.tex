@@ -1,0 +1,150 @@
+\documentclass[titlepage,10pt,a4j]{ltjsarticle}
+\usepackage[margin=15mm]{geometry}
+\usepackage{luatexja}
+\usepackage{luatexja-fontspec}
+\usepackage{luatexja-ruby}
+\usepackage{quizsheet}
+
+\title{READ ME}
+\subtitle{自作\LaTeX 書式のクイズ問題集}
+\author{Xaghoja}
+\newcommand{\DocCopyright}{\textcopyright\ \the\year\ Xaghoja}
+\newcommand{\DocLicense}{MIT}
+\date{%
+    \today
+    \vfill
+    \small \DocCopyright\\
+    \small Licensed under the \DocLicense\ License.%
+}
+
+\begin{document}
+
+\maketitle
+\clearpage
+
+\tableofcontents
+\clearpage
+
+\section{まえがき}
+当文書はクイズ問題集を\LaTeX で作成、ないし、
+あまり\LaTeX の知識がなくとも簡便的に問題集を作成する事のできるアセットについて
+解説したもの、並びに文書作成時にどのような書式になるのかについてを示すデモンストレーションである。
+
+\section{注意事項}
+\begin{itemize}
+    \item Lua\LaTeX 形式でコンパイルすることのできる文書となっている。
+    \item 文書を完成させるにはLua\LaTeX で、2回コンパイルする必要がある。
+    \item マージンは15mmとしている。表はそのマージンを用いる前提で設計しているため、より広いマージンをとると表のサイズは自動で調整されないので、はみ出してしまう可能性がある。
+    \item 
+\end{itemize}
+
+\clearpage %問題を書き始める場合は直前に強制改ページをつけることを強く推奨。
+\section{サンプル問題}
+    \subsection{普通問題}
+        \subsubsection{一般問題}
+            \question{
+                2026年3月現在、青い四角に\texttt{0123}と記されたロゴがおなじみである、
+                電話帳の先頭に載るために現在の社名がつけられた、大阪府に本社を置く引越し事業を手掛ける企業は何？
+            }
+            {
+                アート引越センター
+            }
+            {
+                最初の問題で、なおかつアセットの作成時期が春なので。
+            }
+            \question{
+                hoge
+            }
+            {
+                huga
+            }
+            {
+                hogehuga
+            }
+
+        \subsubsection{青問}
+            \question{
+                    \textbf{【正式名回答】}\par
+                    そのブランドの名前より、アイドルの特訓コミュの演出では時計が用いられている、ゲーム名にある童話のタイトルが含まれるアイドルマスターシリーズのゲームブランドは何でしょう？
+                }
+                {
+                    \textbf{アイドルマスター シンデレラガールズ}\par
+                    \small{＜デレマスはもう一度＞}
+                }
+                {
+                    解説：近鉄南大阪線系統を除く
+                }
+
+    %% 大会の予選などでセクションが変わる際も改ページ推奨。
+    \clearpage
+    \subsection{当紙にまつわる問題}
+    この\texttt{Readme.pdf}や、\texttt{Readme.tex}ファイルにまつわる問題が出題される。
+            \question{
+                \textbf{【主観】}\par
+                この問題集は、このツールによって作られている、非常に美しい文書がかけるほか、図から絵まで書くことが可能である、
+                理系大学生御用達の組版処理システムのことなんという？
+            }
+            {
+                \textbf{\LaTeX}\par
+                \small{（模範：ラテフ、ラテック、ラーテック、レイテック、レイテックス など）\par
+                ＜読みが不定なので、どんな発音でも正解だが、
+                ボード回答の場合は\textbf{\LaTeX} または、\textbf{LaTeX}（大文字小文字が完全一致）と書かない限り
+                誤答とみなすのが適。＞}            
+            }        
+            {
+                生みの親、レスリー・ランポート曰く、
+                「\LaTeX を使っていくうえでの難問の1つに、どう発音するかという問題がある。
+                しかし、これについては、私は何もいわないことにする。名前というのは規則や命令によって決められるものではなく、
+                使われているうちに自然に決まってくるものだからである。\TeX はふつう“テック”と発音されているので、
+                論理的に考えれば、\LaTeX は“ラーテック”や“ラテック”、“レイテック”などが妥当といえる。
+                しかし、言葉というものはつねに論理的であるとは限らないので、
+                “レイテックス”と発音してもあながち間違いとはいえないだろう。」(レスリー・ランポート著『文書処理システム \LaTeX $2\epsilon$』より引用)
+                と述べている。
+            }
+            \question{
+                \textbf{【3要素・完答・大意正解】}\par
+                このアシストアセットを用いて問題集を作成する際に、
+                1問ごとのクイズと補記を書く際に使う\textbackslash\texttt{question}コマンドの3つの\ruby{引数}{ひきすう}に書く内容は
+                順に何と何と何？
+            }
+            {
+                \textbf{問題文・正解・解説}やコメント\par
+                \small{(問題・回答・補記)}
+            }
+            {
+                ここに解説やコメントを記入。
+            }
+            \question{
+                このアシストアセットを用いて問題集を作成する際に使う、文章を意図的に改行するために使うコマンドは何？
+            }
+            {
+                \textbackslash\textbf{\texttt{par}}
+            }
+            {
+                二重バックスラッシュ（\textbackslash\textbackslash）はレイアウトが崩れるため使用不可。ごめんね。
+            }
+            \question{
+                \textbf{【大意正解】}\par
+                このアシストアセットを用いて問題集を作成する際に、
+                問題とその回答に対して、特に解説事項がないので書き記さない場合は、どのように記せば良いか？
+            }
+            {
+                \textbackslash\textbf{\texttt{question}コマンドの3番目の引数に、何の文字列も挿入しない。}
+            }
+            {} %←のように書いてください。
+
+        \subsubsection{終わリの問題}
+            \question{
+                これが最終問題です。全での作問を終えた際につけると「以上。」や、\ruby{労}{ねぎら}いの言葉をつけることができ、
+                クイズ問題の表の真下に後書きなどのコメントを記したいときに使うコマンドは何？
+            }
+            {
+                \textbackslash\textbf{\texttt{quizend}}
+            }
+            {
+                \textbackslash\texttt{quiz }\textbf{end}
+            }
+
+\quizend ここにコメントなど書いたり、表の真下に一言つけて終わるときは、このように書いてください。
+
+\end{document}
