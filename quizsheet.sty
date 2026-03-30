@@ -16,6 +16,7 @@
 \RequirePackage{longtable}
 \RequirePackage{etoolbox}
 \RequirePackage{url}
+\RequirePackage{luatexja-fontspec}
 \RequirePackage[table]{xcolor}
 
 % longtable spacing
@@ -34,12 +35,41 @@
 \newlength{\QuizInnerAnswerW}
 \newlength{\QuizInnerShift}
 \newlength{\QuizInnerPad}
+\newlength{\QuizAnswerShift}
 \setlength{\QuizQuestionW}{13cm}
 \setlength{\QuizAnswerW}{3cm}
 \setlength{\QuizCommentW}{0pt}
 \setlength{\QuizNoW}{6mm}
 \setlength{\QuizInnerShift}{6pt}
 \setlength{\QuizInnerPad}{4pt}
+
+%% 日本語イタリック風表示のフォント分岐。
+\newif\ifquiz@jpitalicfontavailable
+\quiz@jpitalicfontavailablefalse
+\newcommand{\quiz@jpitalicbasefont}{}
+\IfFontExistsTF{HaranoAjiMincho-Medium}{%
+  \renewcommand{\quiz@jpitalicbasefont}{HaranoAjiMincho-Medium}%
+  \quiz@jpitalicfontavailabletrue
+}{%
+  \IfFontExistsTF{IPAexMincho}{%
+    \renewcommand{\quiz@jpitalicbasefont}{IPAexMincho}%
+    \quiz@jpitalicfontavailabletrue
+  }{%
+    \IfFontExistsTF{HaranoAjiMincho-Regular}{%
+      \renewcommand{\quiz@jpitalicbasefont}{HaranoAjiMincho-Regular}%
+      \quiz@jpitalicfontavailabletrue
+    }{}
+  }%
+}
+\ifquiz@jpitalicfontavailable
+  \newjfontfamily\quiz@jpitalicfont[
+    FakeSlant=0.25
+  ]{\quiz@jpitalicbasefont}
+  \newcommand{\quizitalic}[1]{{\quiz@jpitalicfont #1}}
+\else
+  \newcommand{\quizitalic}[1]{\textsl{#1}}
+\fi
+\renewcommand{\textit}[1]{\quizitalic{#1}}
 
 % Counter
 \newcounter{question}
@@ -97,6 +127,10 @@
   \setlength{\QuizCommentW}{\dimexpr\QuizQuestionW+\QuizAnswerW+2\tabcolsep+\arrayrulewidth\relax}%
 }
 
+% \newcommand{\quizsetanswershift}[1]{%
+%   \setlength{\QuizAnswerShift}{#1}%
+% }
+
 % ====================
 % Layout
 % ====================
@@ -126,7 +160,7 @@
   \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
     & \multicolumn{2}{c|}{\cellcolor{black}{\color{white}%
         \makebox[\dimexpr\QuizInnerQuestionW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{問題}}%
-        \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{正解}}%
+        \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\hspace*{1em}\textbf{正解}}%
       }} \\ \hline
   \endfirsthead
 
@@ -140,7 +174,7 @@
   \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
     & \multicolumn{2}{c|}{\cellcolor{black}{\color{white}%
         \makebox[\dimexpr\QuizInnerQuestionW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{問題}}%
-        \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{正解}}%
+        \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\hspace*{1em}\textbf{正解}}%
       }} \\ \hline
   \endhead
 
