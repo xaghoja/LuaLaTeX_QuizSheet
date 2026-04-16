@@ -15,9 +15,12 @@
 \RequirePackage{amsmath}
 \RequirePackage{longtable}
 \RequirePackage{etoolbox}
-\RequirePackage{url}
-\RequirePackage{luatexja-fontspec}
+\RequirePackage{makecell}
+\RequirePackage{booktabs}
 \RequirePackage[table]{xcolor}
+
+\RequirePackage{url}                %URL
+\RequirePackage[version=3]{mhchem}  %化学式
 
 % longtable spacing
 \setlength{\LTpre}{0pt}
@@ -35,6 +38,7 @@
 \newlength{\QuizInnerAnswerW}
 \newlength{\QuizInnerShift}
 \newlength{\QuizInnerPad}
+\newlength{\QuizCellVMargin}
 \newlength{\QuizAnswerShift}
 \setlength{\QuizQuestionW}{13cm}
 \setlength{\QuizAnswerW}{3cm}
@@ -42,6 +46,14 @@
 \setlength{\QuizNoW}{6mm}
 \setlength{\QuizInnerShift}{6pt}
 \setlength{\QuizInnerPad}{4pt}
+\setlength{\QuizCellVMargin}{1pt}
+
+% Keep cell contents tight against the rule lines.
+\newcommand{\quiz@cellwithvspace}[1]{%
+  \vspace*{\dimexpr\QuizCellVMargin-\f@size pt\relax}
+  #1%
+  \vspace*{\QuizCellVMargin}
+}
 
 %% 日本語イタリック風表示のフォント分岐。
 \newif\ifquiz@jpitalicfontavailable
@@ -78,7 +90,11 @@
 % State
 \newif\ifquiz@open
 \quiz@openfalse
+\newif\ifquiz@pageheaderused
+\quiz@pageheaderusedfalse
 \newcommand{\quiz@subtitle}{}
+
+\AddToHook{shipout/before}{\global\quiz@pageheaderusedfalse}
 
 % Title helpers
 \newcommand{\@subtitle}{}
@@ -138,23 +154,19 @@
 \newcolumntype{B}{>{\raggedright\arraybackslash}p{\QuizQuestionW}}
 \newcolumntype{C}{>{\raggedright\arraybackslash}p{\QuizAnswerW}}
 
-\newlength{\QuizSavedRuleW}
-\newcommand{\thickhline}{%
-  \noalign{\global\setlength{\QuizSavedRuleW}{\arrayrulewidth}%
-           \global\setlength{\arrayrulewidth}{1.2pt}}%
-  \hline
-  \noalign{\global\setlength{\arrayrulewidth}{\QuizSavedRuleW}}%
-}
-
 \newcommand{\quiz@starttable}[1]{%
   \def\quiz@subtitle{#1}%
   \quiz@opentrue
+  \ifquiz@pageheaderused
+    \quiz@starttable@noheader{#1}%
+  \else
+    \global\quiz@pageheaderusedtrue
+    \quiz@starttable@withheader{#1}%
+  \fi
+}
+
+\newcommand{\quiz@starttable@withheader}[1]{%
   \begin{longtable}{|N|B|C|}
-  \ifstrempty{#1}{}{%
-    \hline
-    \rowcolor[HTML]{DDDDDD}
-    \multicolumn{3}{|l|}{#1} \\ \hline
-  }
   \hline
   \rowcolor{black}
   \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
@@ -162,6 +174,11 @@
         \makebox[\dimexpr\QuizInnerQuestionW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{問題}}%
         \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\hspace*{1em}\textbf{正解}}%
       }} \\ \hline
+  \ifstrempty{#1}{}{%
+    \rowcolor[HTML]{CCCCCC}
+    \multicolumn{3}{|l|}{\textbf{#1}} \\
+    \quiz@thickrule
+  }
   \endfirsthead
 
   %% 改ページ後にもsubsectionの内容を記すか？ オプション。
@@ -184,11 +201,36 @@
   \endlastfoot
 }
 
+\newcommand{\quiz@starttable@noheader}[1]{%
+  \begin{longtable}{|N|B|C|}
+  \hline
+  \ifstrempty{#1}{}{%
+    \rowcolor[HTML]{CCCCCC}
+    \multicolumn{3}{|l|}{\textbf{#1}} \\
+    \quiz@thickrule
+  }
+  \endfirsthead
+
+  \hline
+  \rowcolor{black}
+  \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
+    & \multicolumn{2}{c|}{\cellcolor{black}{\color{white}%
+        \makebox[\dimexpr\QuizInnerQuestionW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{問題}}%
+        \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\hspace*{1em}\textbf{正解}}%
+      }} \\ \hline
+  \endhead
+
+  \hline
+  \endfoot
+
+  \endlastfoot
+}
+
 \newcommand{\quiz@innernoexp}[2]{%
   \makebox[\linewidth][l]{%
     \hspace*{-\QuizInnerShift}%
     \begin{tabular*}{\dimexpr\linewidth+\QuizInnerShift\relax}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\QuizInnerQuestionW}!{\vrule width \arrayrulewidth}>{\raggedright\arraybackslash}p{\QuizInnerAnswerW}@{\hspace{\QuizInnerPad}}}
-      #1 & #2 \\
+      \quiz@cellwithvspace{#1} & \quiz@cellwithvspace{#2} \\
     \end{tabular*}%
   }%
 }
@@ -197,11 +239,15 @@
   \makebox[\linewidth][l]{%
     \hspace*{-\QuizInnerShift}%
     \begin{tabular*}{\dimexpr\linewidth+\QuizInnerShift\relax}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\QuizInnerQuestionW}!{\vrule width \arrayrulewidth}>{\raggedright\arraybackslash}p{\QuizInnerAnswerW}@{\hspace{\QuizInnerPad}}}
-      #1 & #2 \\
+      \quiz@cellwithvspace{#1} & \quiz@cellwithvspace{#2} \\
       \cline{1-2}
-      \multicolumn{2}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\dimexpr\linewidth-2\QuizInnerPad+2\tabcolsep\relax}@{\hspace{\QuizInnerPad}}}{#3} \\
+      \multicolumn{2}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\dimexpr\linewidth-2\QuizInnerPad+2\tabcolsep\relax}@{\hspace{\QuizInnerPad}}}{\quiz@cellwithvspace{#3}} \\
     \end{tabular*}%
   }%
+}
+
+\newcommand{\quiz@thickrule}{%
+  \specialrule{1.5pt}{0pt}{0pt}%
 }
 
 %% [以上。]はサンプル。好きに変えていただきたい。
@@ -270,7 +316,22 @@
 \renewcommand{\subsubsection}[1]{%
   \quizsection{#1}%
 }
-
+% ====================
+% Question Counter Management
+% ====================
+\newcommand{\renumber}[1][]{%
+  \ifstrempty{#1}{%
+    % 引数なし：1問目から振り直す
+    \setcounter{question}{0}%
+  }{%
+    % 引数あり：指定番号から振り直す（1以上の整数）
+    \ifnum\numexpr#1\relax<1
+      \setcounter{question}{0}%
+    \else
+      \setcounter{question}{\numexpr#1-1\relax}%
+    \fi
+  }%
+}
 \newcommand{\question}[3]{%
   \quiz@beforequestion
   \ifquiz@open\else
@@ -279,11 +340,11 @@
   \ifstrempty{#3}{%
     \multicolumn{1}{|>{\raggedleft\arraybackslash}p{\QuizNoW}||}{\quiz@numcell}
       & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}|}{\quiz@innernoexp{#1}{#2}} \\
-    \thickhline
+    \quiz@thickrule
   }{%
     \multicolumn{1}{|>{\raggedleft\arraybackslash}p{\QuizNoW}||}{\quiz@numcell}
       & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}|}{\quiz@innerwith{#1}{#2}{#3}} \\
-    \thickhline
+    \quiz@thickrule
   }%
 }
 
