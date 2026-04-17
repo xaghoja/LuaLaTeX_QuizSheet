@@ -23,7 +23,7 @@
 \RequirePackage[version=3]{mhchem}  %化学式
 
 % longtable spacing
-\setlength{\LTpre}{0pt}
+\setlength{\LTpre}{\medskipamount}
 \setlength{\LTpost}{0pt}
 
 % ====================
@@ -167,7 +167,6 @@
 
 \newcommand{\quiz@starttable@withheader}[1]{%
   \begin{longtable}{|N|B|C|}
-  \hline
   \rowcolor{black}
   \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
     & \multicolumn{2}{c|}{\cellcolor{black}{\color{white}%
@@ -203,7 +202,6 @@
 
 \newcommand{\quiz@starttable@noheader}[1]{%
   \begin{longtable}{|N|B|C|}
-  \hline
   \ifstrempty{#1}{}{%
     \rowcolor[HTML]{CCCCCC}
     \multicolumn{3}{|l|}{\textbf{#1}} \\
@@ -250,19 +248,19 @@
   \specialrule{1.5pt}{0pt}{0pt}%
 }
 
-%% [以上。]はサンプル。好きに変えていただきたい。
-\newcommand{\quiz@innerend}{%
+%% 終端の文言は引数で差し替える。
+\newcommand{\quiz@innerend}[1]{%
   \makebox[\linewidth][l]{%
     \hspace*{-\QuizInnerShift}%
     \begin{tabular*}{\dimexpr\linewidth+\QuizInnerShift\relax}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\QuizInnerQuestionW}>{\raggedleft\arraybackslash}p{\QuizInnerAnswerW}@{\hspace{\QuizInnerPad}}}
-      {} & 以上。 \\
+      {} & #1 \\
     \end{tabular*}%
   }%
 }
 
-\newcommand{\quiz@endmarkerrow}{%
+\newcommand{\quiz@endmarkerrow}[1]{%
   \multicolumn{1}{>{\raggedleft\arraybackslash}p{\QuizNoW}}{}
-    & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}}{\quiz@innerend} \\
+    & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}}{\quiz@innerend{#1}} \\
 }
 
 \newcommand{\quiz@numcell}{%
@@ -271,7 +269,7 @@
 
 \newcommand{\quiz@beforequestion}{%
   \ifhmode
-    \unskip\par\medskip
+    \unskip\par
   \fi
 }
 
@@ -279,9 +277,10 @@
 % API
 % ====================
 
-\newcommand{\quizend}{%
+\newcommand{\quizend}[1]{%
   \ifquiz@open
-    \quiz@endmarkerrow
+    \noalign{\vskip\medskipamount}%
+    \quiz@endmarkerrow{#1}
     \end{longtable}%
     \quiz@openfalse
   \fi
@@ -348,4 +347,4 @@
   }%
 }
 
-\AtEndDocument{\quizend}
+\AtEndDocument{\quizend{以上。}}
