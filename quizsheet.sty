@@ -100,6 +100,8 @@
 \quiz@tablemetricsappliedfalse
 \newif\ifquiz@pageheaderused
 \quiz@pageheaderusedfalse
+\newcount\quiz@lastheaderpage
+\quiz@lastheaderpage=-1
 \newif\ifquiz@nearpagetop
 \newcount\quiz@tablestartpage
 \quiz@tablestartpage=-1
@@ -146,7 +148,7 @@
   \fi
 }
 
-\AddToHook{shipout/before}{%
+\AddToHook{shipout/after}{%
   \global\quiz@pageheaderusedfalse
 }
 
@@ -208,30 +210,40 @@
 \newcolumntype{B}{>{\raggedright\arraybackslash}p{\QuizQuestionW}}
 \newcolumntype{C}{>{\raggedright\arraybackslash}p{\QuizAnswerW}}
 
-\newcommand{\quiz@starttable}[1]{%
-  \def\quiz@subtitle{#1}%
-  \ifnum\quiz@tablestartpage<\numexpr\value{page}\relax
-    \global\quiz@pageheaderusedfalse
-  \fi
-  \global\quiz@tablestartpage=\numexpr\value{page}\relax
-  \quiz@applytablemetrics
-  \quiz@opentrue
-  \ifquiz@pageheaderused
-    \quiz@starttable@noheader{#1}%
-  \else
-    \global\quiz@pageheaderusedtrue
-    \quiz@starttable@withheader{#1}%
-  \fi
-}
-
-\newcommand{\quiz@starttable@withheader}[1]{%
-  \begin{longtable}{|N|B|C|}
+\newcommand{\quiz@headerrow}{%
   \rowcolor{black}
   \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
     & \multicolumn{2}{c|}{\cellcolor{black}{\color{white}%
         \makebox[\dimexpr\QuizInnerQuestionW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{問題}}%
         \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\hspace*{1em}\textbf{正解}}%
       }} \\ \hline
+}
+
+\newcommand{\quiz@showheaderonceperpage}{%
+  \ifquiz@pageheaderused
+    \hline
+  \else
+    \quiz@headerrow
+    \noalign{\global\quiz@pageheaderusedtrue}
+  \fi
+}
+
+\newcommand{\quiz@starttable}[1]{%
+  \def\quiz@subtitle{#1}%
+  \global\quiz@tablestartpage=\numexpr\value{page}\relax
+  \quiz@applytablemetrics
+  \quiz@opentrue
+  \quiz@starttable@withheader{#1}%
+}
+
+\newcommand{\quiz@starttable@withheader}[1]{%
+  \begin{longtable}{|N|B|C|}
+  % \QuizSection 実行時と実際の表開始ページがずれた場合は、
+  % 新ページ先頭としてヘッダー表示を許可する。
+  \ifnum\quiz@tablestartpage<\numexpr\value{page}\relax
+    \global\quiz@pageheaderusedfalse
+  \fi
+  \quiz@showheaderonceperpage
   \ifstrempty{#1}{}{%
     \rowcolor[HTML]{CCCCCC}
     \multicolumn{3}{|l|}{\textbf{#1}} \\
@@ -244,13 +256,8 @@
   %   \hline
     % \multicolumn{3}{|l|}{続：\quiz@subtitle} \\ \hline
   % }
-  \hline
-  \rowcolor{black}
-  \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
-    & \multicolumn{2}{c|}{\cellcolor{black}{\color{white}%
-        \makebox[\dimexpr\QuizInnerQuestionW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{問題}}%
-        \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\hspace*{1em}\textbf{正解}}%
-      }} \\ \hline
+  \quiz@headerrow
+  \noalign{\global\quiz@pageheaderusedtrue}
 
   \endhead
 
@@ -269,6 +276,7 @@
   }
   \endfirsthead
 
+  \noalign{\global\quiz@pageheaderusedtrue}
   \hline
   \rowcolor{black}
   \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
@@ -358,9 +366,7 @@
 \newcommand{\quizclose}{%
   \ifquiz@open
     \end{longtable}%
-    \ifnum\quiz@tablestartpage<\numexpr\value{page}\relax
-      \global\quiz@tablepagespannedtrue
-    \fi
+    \global\quiz@lasttableclosepage=\numexpr\value{page}\relax
     \quiz@restoretablemetrics
     \quiz@openfalse
     \setlength{\LTpre}{\medskipamount}%
@@ -381,6 +387,11 @@
 \newcommand{\QuizSection}[1]{%
   \ifquiz@open
     \quizclose
+  \fi
+  % 残り領域が極端に少ない場合、実際の表開始は次ページになるため、
+  % 次ページ先頭でヘッダーを出せるようフラグを先行リセットする。
+  \ifdim\dimexpr\pagegoal-\pagetotal\relax<3\baselineskip
+    \global\quiz@pageheaderusedfalse
   \fi
   \quiz@detectnearpagetop
   \ifquiz@nearpagetop
@@ -409,10 +420,6 @@
 \newcommand{\question}[3]{%
   \quiz@beforequestion
   \ifquiz@open\else
-    \quiz@detectnearpagetop
-    \ifquiz@nearpagetop
-      \global\quiz@pageheaderusedfalse
-    \fi
     \setlength{\LTpre}{\medskipamount}%
     \quiz@starttable{}%
   \fi
