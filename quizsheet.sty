@@ -283,6 +283,7 @@
     \quiz@endmarkerrow{#1}
     \end{longtable}%
     \quiz@openfalse
+    \setlength{\LTpre}{\medskipamount}%
   \fi
 }
 
@@ -290,6 +291,7 @@
   \ifquiz@open
     \end{longtable}%
     \quiz@openfalse
+    \setlength{\LTpre}{\medskipamount}%
   \fi
 }
 
@@ -307,7 +309,9 @@
   \ifquiz@open
     \end{longtable}%
     \quiz@openfalse
+    \setlength{\LTpre}{\medskipamount}%
   \fi
+  \setlength{\LTpre}{0pt}%
   \quiz@starttable{#1}%
 }
 
@@ -334,6 +338,7 @@
 \newcommand{\question}[3]{%
   \quiz@beforequestion
   \ifquiz@open\else
+    \setlength{\LTpre}{\medskipamount}%
     \quiz@starttable{}%
   \fi
   \ifstrempty{#3}{%
