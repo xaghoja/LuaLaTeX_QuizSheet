@@ -1,4 +1,4 @@
-\documentclass[titlepage,10pt,a4j]{ltjsarticle}
+\documentclass[titlepage,10pt,a4j]{ltjsarticle} %フォントサイズXXptの部分で変更。
 \usepackage[margin=15mm]{geometry}
 
 % luaLaTeXに関する設定
@@ -58,8 +58,12 @@
 
 \clearpage %問題を書き始める場合は直前に強制改ページをつけることを強く推奨。
 \section{サンプル問題}
+全\ref{q:Final}問。
+
     \subsection{普通問題}
-        \subsubsection{一般問題}
+    \label{nomal}
+
+        \QuizSection{一般問題}
             \question{
                 2026年3月現在、青い四角に\texttt{0123}と記されたロゴがおなじみである、
                 電話帳の先頭に載るために現在の社名がつけられた、大阪府に本社を置く引越し事業を手掛ける企業は何？
@@ -124,6 +128,20 @@
             }
 
             \question{
+                一風変わったお菓子の料理動画を投稿する人物「ロウアイキュー」が、
+                動画「【超解説】サクマドロップスマシュマロの作り方」にて定義している、
+                「お菓子をできる限り少ない材料で作る」ことを主体としている
+                「材料◯つ」を略した呼び名がついた界隈は何？
+            }
+            {
+                \textbf{ざいまる}界隈\newline
+                \small{[\textit{材料◯つ界隈}はもう一度]} %判定基準など
+            }
+            {
+                sm45645506 を参照されたい。なお、水は材料に入らないものとしている。
+            }
+
+            \question{
                 \textbf{【大意正解】}\par
                 赤問はスポーツ問題、では赤本は一般的にはなんの問題集？
             }
@@ -135,8 +153,7 @@
                 イメージカラーが赤いことに由来。
             }
 
-           
-    \subsubsection{青問}
+    \QuizSection{青問}
         \question{
                 \textbf{【正式名称】}\par
                 ゲーム「野生動物運動会(Wild Animal Sports Day)」で、
@@ -149,7 +166,7 @@
             {
                 失敗しま
             }
-        \question{
+        \question{\label{q:QuizTest}
                 \textbf{【正式名称】}\par
                 そのブランドの名前より、アイドルの特訓コミュの演出では時計が用いられている、ゲーム名にある童話のタイトルが含まれるアイドルマスターシリーズのゲームブランドは何でしょう？
             }
@@ -160,6 +177,7 @@
             {
                 2026年11月に15周年を迎えます。
             }
+
         \question{
                 2022年7月に幕張メッセで行われた、
                 ライブ「THE IDOLM@TER \ruby{765PRO}{ナムコプロ} ALLSTARS LIVE SUNRICH COLORFUL」
@@ -181,6 +199,7 @@
             {
                 トモコレ新生活の「相性テスターDX」でも必要。
             }
+
         \question{
                 \textbf{【正式名称】}\par
                 今年（2026年）の4月にYoutubeでの全話無料配信が決まった、
@@ -258,16 +277,44 @@
                 \textbackslash\textbf{\texttt{question}コマンドの3番目の\ruby{引数}{ひきすう}に、何の文字列も挿入しない。}
             }
             {} %←のように書いてください。
+
             \question{
-                問題番号を途中から変更したいときに使う、
+                クイズ問題集を作るにあたって、欠番等の理由で問題番号を途中から変更したいときに使うコマンドは何？
             }
             {
-                \textbackslash\textbf{\texttt{question}コマンドの3番目の\ruby{引数}{ひきすう}に、何の文字列も挿入しない。}
+                \textbackslash\textbf{\texttt{renumber}}
             }
-            {} %←のように書いてください。
+            {
+                \textbackslash\texttt{renumber}コマンド以下につけられた問題たちは、このコマンドで設定した問題番号から連番で割り振られていく。
+            }
 
-        \subsubsection{終わリの問題}
             \question{
+                \textbf{【2要素】}\par
+                問題番号を参照したいときに第一引数につける、\TeX では図表や数式の相互参照に用いるコマンドはそれぞれ何と何？
+            }
+            {
+                \textbackslash\textbf{\texttt{label}}と\textbackslash\textbf{\texttt{ref}}
+                \small{\ensuremath{\langle}山括弧は その他\ensuremath{\rangle}}
+            }
+            {
+                必ず第一引数に付けること。
+            }
+
+            \question{
+                \textbf{【ビジュアルQ】}\par
+                この問題の下にある、グレーの背景に、ちょっとしたここからの問題の傾向を乗せるためにつけたりするコメントを
+                書くためにつけるコマンドは何？
+            }
+            {
+                \textbackslash\textbf{\texttt{QuizSection}}
+            }
+            {
+                その使用例は\pageref{nomal}ページの\ref{nomal}の通り。
+            } 
+
+        \QuizSection{終わリの問題}
+            \question{
+                \label{q:Final}
                 これが最終問題です。このアシストツールを用いて全ての作問を終えた際につけると、「以上。」や\ruby{労}{ねぎら}いの言葉をつけることができ、
                 また、問題集の表の真下に後書きなどのコメントを記したいときに使うコマンドは何？
             }

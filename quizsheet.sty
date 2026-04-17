@@ -40,6 +40,10 @@
 \newlength{\QuizInnerPad}
 \newlength{\QuizCellVMargin}
 \newlength{\QuizAnswerShift}
+\newlength{\QuizBaseTabColSep}
+\newlength{\QuizBaseArrayRuleW}
+\newlength{\quiz@savedtabcolsep}
+\newlength{\quiz@savedarrayrulewidth}
 \setlength{\QuizQuestionW}{13cm}
 \setlength{\QuizAnswerW}{3cm}
 \setlength{\QuizCommentW}{0pt}
@@ -47,6 +51,8 @@
 \setlength{\QuizInnerShift}{6pt}
 \setlength{\QuizInnerPad}{4pt}
 \setlength{\QuizCellVMargin}{1pt}
+\setlength{\QuizBaseTabColSep}{6pt}
+\setlength{\QuizBaseArrayRuleW}{0.4pt}
 
 % Keep cell contents tight against the rule lines.
 \newcommand{\quiz@cellwithvspace}[1]{%
@@ -90,11 +96,59 @@
 % State
 \newif\ifquiz@open
 \quiz@openfalse
+\newif\ifquiz@tablemetricsapplied
+\quiz@tablemetricsappliedfalse
 \newif\ifquiz@pageheaderused
 \quiz@pageheaderusedfalse
+\newif\ifquiz@nearpagetop
+\newcount\quiz@tablestartpage
+\quiz@tablestartpage=-1
+\newcount\quiz@lasttableclosepage
+\quiz@lasttableclosepage=-1
 \newcommand{\quiz@subtitle}{}
 
-\AddToHook{shipout/before}{\global\quiz@pageheaderusedfalse}
+\newcommand{\quiz@detectnearpagetop}{%
+  \ifdim\dimexpr\pagegoal-\pagetotal\relax>0.65\textheight
+    \quiz@nearpagetoptrue
+  \else
+    \quiz@nearpagetopfalse
+  \fi
+}
+
+\newcommand{\quiz@lastquestion}{0}
+\let\quiz@originallabel\label
+\newcommand{\quiz@questionlabel}[1]{%
+  \begingroup
+    \protected@edef\@currentlabel{\quiz@lastquestion}%
+    \quiz@originallabel{#1}%
+  \endgroup
+}
+
+\newcommand{\QuestionLabel}[1]{%
+  \quiz@questionlabel{#1}%
+}
+
+\newcommand{\quiz@applytablemetrics}{%
+  \ifquiz@tablemetricsapplied\else
+    \setlength{\quiz@savedtabcolsep}{\tabcolsep}%
+    \setlength{\quiz@savedarrayrulewidth}{\arrayrulewidth}%
+    \setlength{\tabcolsep}{\QuizBaseTabColSep}%
+    \setlength{\arrayrulewidth}{\QuizBaseArrayRuleW}%
+    \quiz@tablemetricsappliedtrue
+  \fi
+}
+
+\newcommand{\quiz@restoretablemetrics}{%
+  \ifquiz@tablemetricsapplied
+    \setlength{\tabcolsep}{\quiz@savedtabcolsep}%
+    \setlength{\arrayrulewidth}{\quiz@savedarrayrulewidth}%
+    \quiz@tablemetricsappliedfalse
+  \fi
+}
+
+\AddToHook{shipout/before}{%
+  \global\quiz@pageheaderusedfalse
+}
 
 % Title helpers
 \newcommand{\@subtitle}{}
@@ -123,9 +177,9 @@
 }
 
 \newcommand{\quiz@recalcwidths}{%
-  \setlength{\QuizCommentW}{\dimexpr\QuizQuestionW+\QuizAnswerW+2\tabcolsep+\arrayrulewidth\relax}%
-  \setlength{\QuizInnerAnswerW}{\dimexpr(\QuizCommentW-\arrayrulewidth-2\QuizInnerPad)*2/10\relax}%
-  \setlength{\QuizInnerQuestionW}{\dimexpr\QuizCommentW-\arrayrulewidth-2\QuizInnerPad-\QuizInnerAnswerW\relax}%
+  \setlength{\QuizCommentW}{\dimexpr\QuizQuestionW+\QuizAnswerW+2\QuizBaseTabColSep+\QuizBaseArrayRuleW\relax}%
+  \setlength{\QuizInnerAnswerW}{\dimexpr(\QuizCommentW-\QuizBaseArrayRuleW-2\QuizInnerPad)*2/10\relax}%
+  \setlength{\QuizInnerQuestionW}{\dimexpr\QuizCommentW-\QuizBaseArrayRuleW-2\QuizInnerPad-\QuizInnerAnswerW\relax}%
 }
 \quiz@recalcwidths
 
@@ -138,9 +192,9 @@
 \newcommand{\quizsetinnerwidths}[2]{%
   \setlength{\QuizInnerQuestionW}{#1}%
   \setlength{\QuizInnerAnswerW}{#2}%
-  \setlength{\QuizQuestionW}{\dimexpr\QuizInnerQuestionW+\QuizInnerPad-\tabcolsep\relax}%
-  \setlength{\QuizAnswerW}{\dimexpr\QuizInnerAnswerW+\QuizInnerPad-\tabcolsep\relax}%
-  \setlength{\QuizCommentW}{\dimexpr\QuizQuestionW+\QuizAnswerW+2\tabcolsep+\arrayrulewidth\relax}%
+  \setlength{\QuizQuestionW}{\dimexpr\QuizInnerQuestionW+\QuizInnerPad-\QuizBaseTabColSep\relax}%
+  \setlength{\QuizAnswerW}{\dimexpr\QuizInnerAnswerW+\QuizInnerPad-\QuizBaseTabColSep\relax}%
+  \setlength{\QuizCommentW}{\dimexpr\QuizQuestionW+\QuizAnswerW+2\QuizBaseTabColSep+\QuizBaseArrayRuleW\relax}%
 }
 
 % \newcommand{\quizsetanswershift}[1]{%
@@ -156,6 +210,11 @@
 
 \newcommand{\quiz@starttable}[1]{%
   \def\quiz@subtitle{#1}%
+  \ifnum\quiz@tablestartpage<\numexpr\value{page}\relax
+    \global\quiz@pageheaderusedfalse
+  \fi
+  \global\quiz@tablestartpage=\numexpr\value{page}\relax
+  \quiz@applytablemetrics
   \quiz@opentrue
   \ifquiz@pageheaderused
     \quiz@starttable@noheader{#1}%
@@ -192,9 +251,9 @@
         \makebox[\dimexpr\QuizInnerQuestionW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{問題}}%
         \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\hspace*{1em}\textbf{正解}}%
       }} \\ \hline
+
   \endhead
 
-  \hline
   \endfoot
 
   \endlastfoot
@@ -202,6 +261,7 @@
 
 \newcommand{\quiz@starttable@noheader}[1]{%
   \begin{longtable}{|N|B|C|}
+  \hline
   \ifstrempty{#1}{}{%
     \rowcolor[HTML]{CCCCCC}
     \multicolumn{3}{|l|}{\textbf{#1}} \\
@@ -218,17 +278,17 @@
       }} \\ \hline
   \endhead
 
-  \hline
   \endfoot
 
   \endlastfoot
 }
 
-\newcommand{\quiz@innernoexp}[2]{%
+\newcommand{\quiz@innernoexp}[2]{
   \makebox[\linewidth][l]{%
     \hspace*{-\QuizInnerShift}%
     \begin{tabular*}{\dimexpr\linewidth+\QuizInnerShift\relax}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\QuizInnerQuestionW}!{\vrule width \arrayrulewidth}>{\raggedright\arraybackslash}p{\QuizInnerAnswerW}@{\hspace{\QuizInnerPad}}}
-      \quiz@cellwithvspace{#1} & \quiz@cellwithvspace{#2} \\
+      % \cellcolor[HTML]{FFFFFF} %解説枠をより目立たせたい場合は
+      \begingroup\let\label\quiz@questionlabel\quiz@cellwithvspace{#1}\endgroup & \quiz@cellwithvspace{#2} \\
     \end{tabular*}%
   }%
 }
@@ -237,9 +297,10 @@
   \makebox[\linewidth][l]{%
     \hspace*{-\QuizInnerShift}%
     \begin{tabular*}{\dimexpr\linewidth+\QuizInnerShift\relax}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\QuizInnerQuestionW}!{\vrule width \arrayrulewidth}>{\raggedright\arraybackslash}p{\QuizInnerAnswerW}@{\hspace{\QuizInnerPad}}}
-      \quiz@cellwithvspace{#1} & \quiz@cellwithvspace{#2} \\
+      % \cellcolor[HTML]{FFFFFF} %解説枠をより目立たせたい場合は
+      \begingroup\let\label\quiz@questionlabel\quiz@cellwithvspace{#1}\endgroup & \quiz@cellwithvspace{#2} \\
       \cline{1-2}
-      \multicolumn{2}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\dimexpr\linewidth-2\QuizInnerPad+2\tabcolsep\relax}@{\hspace{\QuizInnerPad}}}{\quiz@cellwithvspace{#3}} \\
+      \multicolumn{2}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\dimexpr\linewidth-2\QuizInnerPad+2\tabcolsep\relax}@{\hspace{\QuizInnerPad}}}{\begingroup\let\label\quiz@questionlabel\quiz@cellwithvspace{#3}\endgroup} \\
     \end{tabular*}%
   }%
 }
@@ -248,7 +309,10 @@
   \specialrule{1.5pt}{0pt}{0pt}%
 }
 
-%% 終端の文言は引数で差し替える。
+\newcommand{\quiz@rowrule}{%
+  \quiz@thickrule
+}
+
 \newcommand{\quiz@innerend}[1]{%
   \makebox[\linewidth][l]{%
     \hspace*{-\QuizInnerShift}%
@@ -264,7 +328,10 @@
 }
 
 \newcommand{\quiz@numcell}{%
-  \refstepcounter{question}\thequestion
+  \refstepcounter{question}%
+  \xdef\quiz@lastquestion{\thequestion}%
+  \protected@edef\@currentlabel{\quiz@lastquestion}%
+  \thequestion
 }
 
 \newcommand{\quiz@beforequestion}{%
@@ -279,9 +346,10 @@
 
 \newcommand{\quizend}[1]{%
   \ifquiz@open
-    \noalign{\vskip\medskipamount}%
+    \noalign{\vskip0pt}%
     \quiz@endmarkerrow{#1}
     \end{longtable}%
+    \quiz@restoretablemetrics
     \quiz@openfalse
     \setlength{\LTpre}{\medskipamount}%
   \fi
@@ -290,6 +358,10 @@
 \newcommand{\quizclose}{%
   \ifquiz@open
     \end{longtable}%
+    \ifnum\quiz@tablestartpage<\numexpr\value{page}\relax
+      \global\quiz@tablepagespannedtrue
+    \fi
+    \quiz@restoretablemetrics
     \quiz@openfalse
     \setlength{\LTpre}{\medskipamount}%
   \fi
@@ -303,22 +375,21 @@
     \quizclose
   \fi
 }
-\pretocmd{\subsection}{\quiz@onsubsection}{}{}
+% \pretocmd{\subsection}{\quiz@onsubsection}{}{}
+% \pretocmd{\subsubsection}{\quiz@onsubsection}{}{}
 
-\newcommand{\quizsection}[1]{%
+\newcommand{\QuizSection}[1]{%
   \ifquiz@open
-    \end{longtable}%
-    \quiz@openfalse
-    \setlength{\LTpre}{\medskipamount}%
+    \quizclose
+  \fi
+  \quiz@detectnearpagetop
+  \ifquiz@nearpagetop
+    \global\quiz@pageheaderusedfalse
   \fi
   \setlength{\LTpre}{0pt}%
   \quiz@starttable{#1}%
 }
 
-% subsubsectionの機能の振り直し。
-\renewcommand{\subsubsection}[1]{%
-  \quizsection{#1}%
-}
 % ====================
 % Question Counter Management
 % ====================
@@ -338,17 +409,21 @@
 \newcommand{\question}[3]{%
   \quiz@beforequestion
   \ifquiz@open\else
+    \quiz@detectnearpagetop
+    \ifquiz@nearpagetop
+      \global\quiz@pageheaderusedfalse
+    \fi
     \setlength{\LTpre}{\medskipamount}%
     \quiz@starttable{}%
   \fi
   \ifstrempty{#3}{%
     \multicolumn{1}{|>{\raggedleft\arraybackslash}p{\QuizNoW}||}{\quiz@numcell}
       & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}|}{\quiz@innernoexp{#1}{#2}} \\
-    \quiz@thickrule
+    \quiz@rowrule
   }{%
     \multicolumn{1}{|>{\raggedleft\arraybackslash}p{\QuizNoW}||}{\quiz@numcell}
       & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}|}{\quiz@innerwith{#1}{#2}{#3}} \\
-    \quiz@thickrule
+    \quiz@rowrule
   }%
 }
 
