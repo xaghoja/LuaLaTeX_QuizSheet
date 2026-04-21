@@ -1,4 +1,4 @@
-%% quizsheet.sty
+﻿%% quizsheet.sty
 %% Copyright (c) 2026 Xaghoja
 %%
 %% This style file was created with the assistance of GitHub Copilot.
@@ -9,7 +9,13 @@
 %% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{quizsheet}[2026/03/29 Quiz sheet table style]
+\ProvidesPackage{quizsheet}[2026/04/20 Quiz sheet table style v3]
+
+\newif\ifquiz@repeatsectiononbreak
+\quiz@repeatsectiononbreakfalse
+\DeclareOption{repeatsection}{\quiz@repeatsectiononbreaktrue}
+\DeclareOption{norepeatsection}{\quiz@repeatsectiononbreakfalse}
+\ProcessOptions\relax
 
 \RequirePackage{array}
 \RequirePackage{amsmath}
@@ -18,9 +24,29 @@
 \RequirePackage{makecell}
 \RequirePackage{booktabs}
 \RequirePackage[table]{xcolor}
+\RequirePackage{multirow}
+\RequirePackage{url}
+\RequirePackage[version=3]{mhchem}
 
-\RequirePackage{url}                %URL
-\RequirePackage[version=3]{mhchem}  %化学式
+% Fake slant amount used by \textit for Japanese glyphs.
+\newcommand{\QuizItalicFakeSlant}{0.25}
+
+\ifcsname newjfontfamily\endcsname
+  \newjfontfamily\quiz@japaneseitalic[
+    UprightFont = *,
+    ItalicFont = *,
+    ItalicFeatures = {FakeSlant=\QuizItalicFakeSlant}
+  ]{HaranoAjiMincho-Regular}
+\fi
+
+\let\quiz@origtextit\textit
+\DeclareRobustCommand{\textit}[1]{%
+  \ifcsname quiz@japaneseitalic\endcsname
+    {\itshape\quiz@japaneseitalic #1}%
+  \else
+    \quiz@origtextit{#1}%
+  \fi
+}
 
 % longtable spacing
 \setlength{\LTpre}{\medskipamount}
@@ -29,95 +55,95 @@
 % ====================
 % Settings
 % ====================
-% 表の幅の設定
-\newlength{\QuizQuestionW}
-\newlength{\QuizAnswerW}
-\newlength{\QuizCommentW}
-\newlength{\QuizNoW}
-\newlength{\QuizInnerQuestionW}
-\newlength{\QuizInnerAnswerW}
-\newlength{\QuizInnerShift}
-\newlength{\QuizInnerPad}
-\newlength{\QuizCellVMargin}
-\newlength{\QuizAnswerShift}
+
 \newlength{\QuizBaseTabColSep}
 \newlength{\QuizBaseArrayRuleW}
+\newlength{\QuizNoSepRuleW}
+\newlength{\QuizOuterVRuleW}
+\newlength{\QuizQuestionSepRuleW}
+\newlength{\QuizCommentIndent}
+\newlength{\QuizCommentRuleShift}
+\newlength{\QuizCellVMargin}
+\newlength{\QuizCellExtraDepth}
+\newlength{\QuizSectionCellVMargin}
+\newlength{\QuizSectionCellExtraDepth}
+\newlength{\QuizTextBaselineSkip}
+\newlength{\QuizRubyGuardRowExtra}
 \newlength{\quiz@savedtabcolsep}
 \newlength{\quiz@savedarrayrulewidth}
-\setlength{\QuizQuestionW}{13cm}
-\setlength{\QuizAnswerW}{3cm}
-\setlength{\QuizCommentW}{0pt}
-\setlength{\QuizNoW}{6mm}
-\setlength{\QuizInnerShift}{6pt}
-\setlength{\QuizInnerPad}{4pt}
-\setlength{\QuizCellVMargin}{1pt}
+\newlength{\quiz@savedextrarowheight}
+
+\newlength{\QuizBlockW}
+\newlength{\QuizInnerW}
+\newlength{\QuizNoColW}
+\newlength{\QuizQuestionColW}
+\newlength{\QuizAnswerColW}
+\newlength{\QuizCommentColW}
+
 \setlength{\QuizBaseTabColSep}{6pt}
 \setlength{\QuizBaseArrayRuleW}{0.4pt}
+\setlength{\QuizNoSepRuleW}{2pt}
+\setlength{\QuizOuterVRuleW}{\QuizBaseArrayRuleW}
+\setlength{\QuizQuestionSepRuleW}{1.5pt}
+\setlength{\QuizCommentIndent}{5pt}
+\setlength{\QuizCommentRuleShift}{-7pt}
+\setlength{\QuizCellVMargin}{0pt}
+\setlength{\QuizCellExtraDepth}{6pt}
+\setlength{\QuizSectionCellVMargin}{-1.5pt}
+\setlength{\QuizSectionCellExtraDepth}{1pt}
+\setlength{\QuizTextBaselineSkip}{\normalbaselineskip}
+\setlength{\QuizRubyGuardRowExtra}{3pt}
 
-% Keep cell contents tight against the rule lines.
-\newcommand{\quiz@cellwithvspace}[1]{%
-  \vspace*{\dimexpr\QuizCellVMargin-\f@size pt\relax}
-  #1%
-  \vspace*{\QuizCellVMargin}
+\newcommand{\quiz@recalcwidths}{%
+  \setlength{\QuizBlockW}{\linewidth}%
+  \setlength{\QuizInnerW}{\dimexpr\QuizBlockW-6\QuizBaseTabColSep-2\QuizOuterVRuleW-\QuizNoSepRuleW-\QuizBaseArrayRuleW\relax}%
+  \setlength{\QuizNoColW}{\dimexpr\QuizInnerW/26\relax}%
+  \setlength{\QuizQuestionColW}{\dimexpr\QuizInnerW*20/26\relax}%
+  \setlength{\QuizAnswerColW}{\dimexpr\QuizInnerW*5/26\relax}%
+  \setlength{\QuizCommentColW}{\dimexpr\QuizQuestionColW+\QuizAnswerColW+2\QuizBaseTabColSep+\QuizBaseArrayRuleW\relax}%
 }
+\quiz@recalcwidths
 
-%% 日本語イタリック風表示のフォント分岐。
-\newif\ifquiz@jpitalicfontavailable
-\quiz@jpitalicfontavailablefalse
-\newcommand{\quiz@jpitalicbasefont}{}
-\IfFontExistsTF{HaranoAjiMincho-Medium}{%
-  \renewcommand{\quiz@jpitalicbasefont}{HaranoAjiMincho-Medium}%
-  \quiz@jpitalicfontavailabletrue
-}{%
-  \IfFontExistsTF{IPAexMincho}{%
-    \renewcommand{\quiz@jpitalicbasefont}{IPAexMincho}%
-    \quiz@jpitalicfontavailabletrue
-  }{%
-    \IfFontExistsTF{HaranoAjiMincho-Regular}{%
-      \renewcommand{\quiz@jpitalicbasefont}{HaranoAjiMincho-Regular}%
-      \quiz@jpitalicfontavailabletrue
-    }{}
+\newcommand{\quiz@cellwithvspace}[1]{%
+  \noindent\raisebox{-\QuizCellVMargin}{%
+    \parbox[t]{\linewidth}{%
+      \setlength{\baselineskip}{\QuizTextBaselineSkip}%
+      \setlength{\lineskip}{1pt}%
+      \setlength{\lineskiplimit}{1pt}%
+      \setlength{\parskip}{0pt}%
+      \rule{0pt}{\dimexpr\ht\strutbox+\QuizRubyGuardRowExtra\relax}%
+      \ignorespaces#1\unskip\ifhmode\strut\fi\vrule width 0pt height 0pt depth \QuizCellExtraDepth
+    }%
   }%
 }
-\ifquiz@jpitalicfontavailable
-  \newjfontfamily\quiz@jpitalicfont[
-    FakeSlant=0.25
-  ]{\quiz@jpitalicbasefont}
-  \newcommand{\quizitalic}[1]{{\quiz@jpitalicfont #1}}
-\else
-  \newcommand{\quizitalic}[1]{\textsl{#1}}
-\fi
-\renewcommand{\textit}[1]{\quizitalic{#1}}
 
-% Counter
-\newcounter{question}
-\renewcommand{\thequestion}{\arabic{question}}
-
-% State
-\newif\ifquiz@open
-\quiz@openfalse
-\newif\ifquiz@tablemetricsapplied
-\quiz@tablemetricsappliedfalse
-\newif\ifquiz@pageheaderused
-\quiz@pageheaderusedfalse
-\newcount\quiz@lastheaderpage
-\quiz@lastheaderpage=-1
-\newif\ifquiz@nearpagetop
-\newcount\quiz@tablestartpage
-\quiz@tablestartpage=-1
-\newcount\quiz@lasttableclosepage
-\quiz@lasttableclosepage=-1
-\newcommand{\quiz@subtitle}{}
-
-\newcommand{\quiz@detectnearpagetop}{%
-  \ifdim\dimexpr\pagegoal-\pagetotal\relax>0.65\textheight
-    \quiz@nearpagetoptrue
-  \else
-    \quiz@nearpagetopfalse
-  \fi
+\newcommand{\quiz@sectioncellwithvspace}[1]{%
+  \noindent\raisebox{-\QuizSectionCellVMargin}{\strut\ignorespaces#1\unskip\strut\vrule width 0pt height 0pt depth \QuizSectionCellExtraDepth}%
 }
 
+% ====================
+% State
+% ====================
+
+\newif\ifquiz@open
+\quiz@openfalse
+\newif\ifquiz@pendingsection
+\quiz@pendingsectionfalse
+\newif\ifquiz@hasactivesection
+\quiz@hasactivesectionfalse
+\newif\ifquiz@tablemetricsapplied
+\quiz@tablemetricsappliedfalse
+\newif\ifquiz@hasquestion
+\quiz@hasquestionfalse
+
+\newcommand{\quiz@pendingsectiontitle}{}
+\newcommand{\quiz@activesectiontitle}{}
+\newcount\quiz@renumberstart
+\quiz@renumberstart=1
+\newcounter{question}
+\renewcommand{\thequestion}{\arabic{question}}
 \newcommand{\quiz@lastquestion}{0}
+
 \let\quiz@originallabel\label
 \newcommand{\quiz@questionlabel}[1]{%
   \begingroup
@@ -126,16 +152,14 @@
   \endgroup
 }
 
-\newcommand{\QuestionLabel}[1]{%
-  \quiz@questionlabel{#1}%
-}
-
 \newcommand{\quiz@applytablemetrics}{%
   \ifquiz@tablemetricsapplied\else
     \setlength{\quiz@savedtabcolsep}{\tabcolsep}%
     \setlength{\quiz@savedarrayrulewidth}{\arrayrulewidth}%
+    \setlength{\quiz@savedextrarowheight}{\extrarowheight}%
     \setlength{\tabcolsep}{\QuizBaseTabColSep}%
     \setlength{\arrayrulewidth}{\QuizBaseArrayRuleW}%
+    \setlength{\extrarowheight}{0pt}%
     \quiz@tablemetricsappliedtrue
   \fi
 }
@@ -144,19 +168,63 @@
   \ifquiz@tablemetricsapplied
     \setlength{\tabcolsep}{\quiz@savedtabcolsep}%
     \setlength{\arrayrulewidth}{\quiz@savedarrayrulewidth}%
+    \setlength{\extrarowheight}{\quiz@savedextrarowheight}%
     \quiz@tablemetricsappliedfalse
   \fi
 }
 
-\AddToHook{shipout/after}{%
-  \global\quiz@pageheaderusedfalse
+\newcommand{\quiz@setpendingsection}[1]{%
+  \gdef\quiz@pendingsectiontitle{#1}%
+  \global\quiz@pendingsectiontrue
 }
 
+\newcommand{\quiz@setactivesection}[1]{%
+  \gdef\quiz@activesectiontitle{#1}%
+  \global\quiz@hasactivesectiontrue
+}
+
+\newcommand{\quiz@clearactivesection}{%
+  \global\quiz@hasactivesectionfalse
+  \gdef\quiz@activesectiontitle{}%
+}
+
+\newcommand{\quiz@clearpendingsection}{%
+  \global\quiz@pendingsectionfalse
+  \gdef\quiz@pendingsectiontitle{}%
+}
+
+\newcommand{\quiz@continuedsectionblock}{%
+  \ifquiz@repeatsectiononbreak
+    \ifquiz@hasactivesection
+      \makebox[\QuizBlockW][l]{%
+        \begin{tabular*}{\QuizBlockW}{|>{\raggedleft\arraybackslash}p{\QuizNoColW}!{\vrule width \QuizNoSepRuleW}>{\raggedright\arraybackslash}p{\QuizQuestionColW}|>{\raggedright\arraybackslash}p{\QuizAnswerColW}|}
+          \multicolumn{3}{|l|}{\cellcolor[HTML]{C0C0C0}\quiz@sectioncellwithvspace{\textbf{\quiz@activesectiontitle}}} \\
+          \specialrule{\QuizQuestionSepRuleW}{0pt}{0pt}
+        \end{tabular*}%
+      }\\
+    \fi
+  \fi
+}
+
+\ExplSyntaxOn
+\cs_new_protected:Npn \quiz_ifblank:nnTF #1#2#3
+  {
+    \tl_set:Nn \l_tmpa_tl {#1}
+    \tl_replace_all:Nnn \l_tmpa_tl { \par } { }
+    \tl_if_blank:eTF { \tl_trim_spaces:V \l_tmpa_tl } {#2} {#3}
+  }
+\newcommand{\quiz@ifblankTF}[3]{\quiz_ifblank:nnTF{#1}{#2}{#3}}
+\ExplSyntaxOff
+
+% ====================
 % Title helpers
+% ====================
+
 \newcommand{\@subtitle}{}
 \newcommand{\subtitle}[1]{\gdef\@subtitle{#1}}
 \newcommand{\@license}{}
 \newcommand{\license}[1]{\gdef\@license{#1}}
+
 \let\quiz@orig@maketitle\maketitle
 \newcommand{\quiz@savedtitle}{}
 \newcommand{\quiz@saveddate}{}
@@ -167,184 +235,136 @@
     \gdef\@title{\quiz@savedtitle\\\large \@subtitle}%
   }%
   \ifstrempty{\@license}{}{%
-    \ifstrempty{\quiz@saveddate}{%
-      \gdef\@date{\vfill {\small \@license}}%
-    }{%
-      \gdef\@date{\quiz@saveddate\vfill {\small \@license}}%
-    }%
+    \g@addto@macro\@thanks{\par\vfill\begin{center}\small \@license\end{center}\par}%
   }%
   \quiz@orig@maketitle
   \global\let\@title\quiz@savedtitle
   \global\let\@date\quiz@saveddate
 }
 
-\newcommand{\quiz@recalcwidths}{%
-  \setlength{\QuizCommentW}{\dimexpr\QuizQuestionW+\QuizAnswerW+2\QuizBaseTabColSep+\QuizBaseArrayRuleW\relax}%
-  \setlength{\QuizInnerAnswerW}{\dimexpr(\QuizCommentW-\QuizBaseArrayRuleW-2\QuizInnerPad)*2/10\relax}%
-  \setlength{\QuizInnerQuestionW}{\dimexpr\QuizCommentW-\QuizBaseArrayRuleW-2\QuizInnerPad-\QuizInnerAnswerW\relax}%
-}
-\quiz@recalcwidths
-
-\newcommand{\quizsetwidths}[3]{%
-  \setlength{\QuizQuestionW}{#1}%
-  \setlength{\QuizAnswerW}{#2}%
-  \quiz@recalcwidths%
-}
-
-\newcommand{\quizsetinnerwidths}[2]{%
-  \setlength{\QuizInnerQuestionW}{#1}%
-  \setlength{\QuizInnerAnswerW}{#2}%
-  \setlength{\QuizQuestionW}{\dimexpr\QuizInnerQuestionW+\QuizInnerPad-\QuizBaseTabColSep\relax}%
-  \setlength{\QuizAnswerW}{\dimexpr\QuizInnerAnswerW+\QuizInnerPad-\QuizBaseTabColSep\relax}%
-  \setlength{\QuizCommentW}{\dimexpr\QuizQuestionW+\QuizAnswerW+2\QuizBaseTabColSep+\QuizBaseArrayRuleW\relax}%
-}
-
-% \newcommand{\quizsetanswershift}[1]{%
-%   \setlength{\QuizAnswerShift}{#1}%
-% }
-
 % ====================
-% Layout
+% Layout blocks
 % ====================
-\newcolumntype{N}{>{\raggedleft\arraybackslash}p{\QuizNoW}}
-\newcolumntype{B}{>{\raggedright\arraybackslash}p{\QuizQuestionW}}
-\newcolumntype{C}{>{\raggedright\arraybackslash}p{\QuizAnswerW}}
 
-\newcommand{\quiz@headerrow}{%
-  \rowcolor{black}
-  \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
-    & \multicolumn{2}{c|}{\cellcolor{black}{\color{white}%
-        \makebox[\dimexpr\QuizInnerQuestionW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{問題}}%
-        \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\hspace*{1em}\textbf{正解}}%
-      }} \\ \hline
+\newcommand{\quiz@tenptfont}{\fontsize{10pt}{12pt}\selectfont}
+\newcommand{\quiz@headercell}[1]{\quiz@tenptfont\bfseries #1}
+
+\newcommand{\quiz@headerblock}{%
+  \begingroup
+    \setlength{\extrarowheight}{0pt}%
+    \renewcommand{\arraystretch}{1}%
+    \makebox[\QuizBlockW][l]{%
+      \begin{tabular*}{\QuizBlockW}{|>{\centering\arraybackslash}m{\QuizNoColW}!{\vrule width \QuizNoSepRuleW}>{\centering\arraybackslash}m{\QuizQuestionColW}|>{\centering\arraybackslash}m{\QuizAnswerColW}|}
+        \rowcolor{black}
+        \cellcolor{black}{\color{white}\quiz@headercell{No.}}
+          & \cellcolor{black}{\color{white}\quiz@headercell{問題}}
+          & \cellcolor{black}{\color{white}\quiz@headercell{正解}} \\
+        \hline
+      \end{tabular*}%
+    }%
+  \endgroup
 }
 
-\newcommand{\quiz@showheaderonceperpage}{%
-  \ifquiz@pageheaderused
-    \hline
-  \else
-    \quiz@headerrow
-    \noalign{\global\quiz@pageheaderusedtrue}
-  \fi
+\newcommand{\quiz@commentcell}[1]{%
+  \hspace*{\dimexpr\QuizCommentIndent+\QuizCommentRuleShift\relax}%
+  \vrule width \arrayrulewidth
+  \hspace*{\QuizCommentIndent}%
+  \raisebox{-\QuizCellVMargin}{%
+    \parbox[t]{\dimexpr\linewidth-3\QuizCommentIndent-\QuizCommentRuleShift-\arrayrulewidth\relax}{%
+      \setlength{\baselineskip}{\QuizTextBaselineSkip}%
+      \setlength{\lineskip}{1pt}%
+      \setlength{\lineskiplimit}{1pt}%
+      \setlength{\parskip}{0pt}%
+      \rule{0pt}{\dimexpr\ht\strutbox+\QuizRubyGuardRowExtra\relax}%
+      \ignorespaces#1\unskip\ifhmode\strut\fi\vrule width 0pt height 0pt depth \QuizCellExtraDepth
+    }%
+  }%
 }
 
-\newcommand{\quiz@starttable}[1]{%
-  \def\quiz@subtitle{#1}%
-  \global\quiz@tablestartpage=\numexpr\value{page}\relax
+\newcommand{\quiz@blockrow@noexp}[3]{%
+  \makebox[\QuizBlockW][l]{%
+    \begin{tabular*}{\QuizBlockW}{|>{\raggedleft\arraybackslash}p{\QuizNoColW}!{\vrule width \QuizNoSepRuleW}>{\raggedright\arraybackslash}p{\QuizQuestionColW}|>{\raggedright\arraybackslash}p{\QuizAnswerColW}|}
+      \ifstrempty{#1}{}{%
+        \multicolumn{3}{|l|}{\cellcolor[HTML]{C0C0C0}\quiz@sectioncellwithvspace{\textbf{#1}}} \\
+        \specialrule{\QuizQuestionSepRuleW}{0pt}{0pt}
+      }%
+      \begingroup\let\label\quiz@questionlabel\quiz@cellwithvspace{#2}\endgroup
+        & \quiz@cellwithvspace{#3}
+        & \quiz@cellwithvspace{} \\
+      \specialrule{\QuizQuestionSepRuleW}{0pt}{0pt}
+    \end{tabular*}%
+  }%
+}
+
+\newcommand{\quiz@blockrow@simple}[4]{%
+  \makebox[\QuizBlockW][l]{%
+    \begin{tabular*}{\QuizBlockW}{|>{\raggedleft\arraybackslash}p{\QuizNoColW}!{\vrule width \QuizNoSepRuleW}>{\raggedright\arraybackslash}p{\QuizQuestionColW}|>{\raggedright\arraybackslash}p{\QuizAnswerColW}|}
+      \ifstrempty{#1}{}{%
+        \multicolumn{3}{|l|}{\cellcolor[HTML]{C0C0C0}\quiz@sectioncellwithvspace{\textbf{#1}}} \\
+        \specialrule{\QuizQuestionSepRuleW}{0pt}{0pt}
+      }%
+      {\fontsize{10pt}{12pt}\selectfont #2}
+        & \begingroup\let\label\quiz@questionlabel\quiz@cellwithvspace{#3}\endgroup
+        & \quiz@cellwithvspace{#4} \\
+      \specialrule{\QuizQuestionSepRuleW}{0pt}{0pt}
+    \end{tabular*}%
+  }%
+}
+
+\newcommand{\quiz@blockrow@withcomment}[5]{%
+  \makebox[\QuizBlockW][l]{%
+    \begin{tabular*}{\QuizBlockW}{|>{\raggedleft\arraybackslash}p{\QuizNoColW}!{\vrule width \QuizNoSepRuleW}>{\raggedright\arraybackslash}p{\QuizQuestionColW}|>{\raggedright\arraybackslash}p{\QuizAnswerColW}|}
+      \ifstrempty{#1}{}{%
+        \multicolumn{3}{|l|}{\cellcolor[HTML]{C0C0C0}\quiz@sectioncellwithvspace{\textbf{#1}}} \\
+        \specialrule{\QuizQuestionSepRuleW}{0pt}{0pt}
+      }%
+      {\fontsize{10pt}{12pt}\selectfont #2}
+        & \begingroup\let\label\quiz@questionlabel\quiz@cellwithvspace{#3}\endgroup
+        & \quiz@cellwithvspace{#4} \\
+      \cline{2-3}
+      \mbox{}
+        & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentColW}|}{\begingroup\let\label\quiz@questionlabel\quiz@commentcell{#5}\endgroup} \\
+      \specialrule{\QuizQuestionSepRuleW}{0pt}{0pt}
+    \end{tabular*}%
+  }%
+}
+
+\newcommand{\quiz@starttable}{%
+  \quiz@recalcwidths
   \quiz@applytablemetrics
-  \quiz@opentrue
-  \quiz@starttable@withheader{#1}%
+  \begin{longtable}{@{}p{\QuizBlockW}@{}}
+  \quiz@headerblock \\
+  \endfirsthead
+  \quiz@headerblock \\
+  \quiz@continuedsectionblock
+  \endhead
+  \endfoot
+  \endlastfoot
+  \global\quiz@opentrue
 }
 
-\newcommand{\quiz@starttable@withheader}[1]{%
-  \begin{longtable}{|N|B|C|}
-  % \QuizSection 実行時と実際の表開始ページがずれた場合は、
-  % 新ページ先頭としてヘッダー表示を許可する。
-  \ifnum\quiz@tablestartpage<\numexpr\value{page}\relax
-    \global\quiz@pageheaderusedfalse
+\newcommand{\quiz@emitquestionblock}[3]{%
+  \ifnum\value{question}<\quiz@renumberstart
+    \setcounter{question}{\numexpr\quiz@renumberstart-1\relax}%
   \fi
-  \quiz@showheaderonceperpage
-  \ifstrempty{#1}{}{%
-    \rowcolor[HTML]{CCCCCC}
-    \multicolumn{3}{|l|}{\textbf{#1}} \\
-    \quiz@thickrule
-  }
-  \endfirsthead
-
-  %% 改ページ後にもsubsectionの内容を記すか？ オプション。
-  % \ifdefempty{\quiz@subtitle}{}{%
-  %   \hline
-    % \multicolumn{3}{|l|}{続：\quiz@subtitle} \\ \hline
-  % }
-  \quiz@headerrow
-  \noalign{\global\quiz@pageheaderusedtrue}
-
-  \endhead
-
-  \endfoot
-
-  \endlastfoot
-}
-
-\newcommand{\quiz@starttable@noheader}[1]{%
-  \begin{longtable}{|N|B|C|}
-  \hline
-  \ifstrempty{#1}{}{%
-    \rowcolor[HTML]{CCCCCC}
-    \multicolumn{3}{|l|}{\textbf{#1}} \\
-    \quiz@thickrule
-  }
-  \endfirsthead
-
-  \noalign{\global\quiz@pageheaderusedtrue}
-  \hline
-  \rowcolor{black}
-  \multicolumn{1}{|c}{\cellcolor{black}{\color{white} \textbf{No.}}}
-    & \multicolumn{2}{c|}{\cellcolor{black}{\color{white}%
-        \makebox[\dimexpr\QuizInnerQuestionW+2\QuizInnerPad-2\tabcolsep\relax][c]{\textbf{問題}}%
-        \makebox[\dimexpr\QuizInnerAnswerW+2\QuizInnerPad-2\tabcolsep\relax][c]{\hspace*{1em}\textbf{正解}}%
-      }} \\ \hline
-  \endhead
-
-  \endfoot
-
-  \endlastfoot
-}
-
-\newcommand{\quiz@innernoexp}[2]{
-  \makebox[\linewidth][l]{%
-    \hspace*{-\QuizInnerShift}%
-    \begin{tabular*}{\dimexpr\linewidth+\QuizInnerShift\relax}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\QuizInnerQuestionW}!{\vrule width \arrayrulewidth}>{\raggedright\arraybackslash}p{\QuizInnerAnswerW}@{\hspace{\QuizInnerPad}}}
-      % \cellcolor[HTML]{FFFFFF} %解説枠をより目立たせたい場合は
-      \begingroup\let\label\quiz@questionlabel\quiz@cellwithvspace{#1}\endgroup & \quiz@cellwithvspace{#2} \\
-    \end{tabular*}%
-  }%
-}
-
-\newcommand{\quiz@innerwith}[3]{%
-  \makebox[\linewidth][l]{%
-    \hspace*{-\QuizInnerShift}%
-    \begin{tabular*}{\dimexpr\linewidth+\QuizInnerShift\relax}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\QuizInnerQuestionW}!{\vrule width \arrayrulewidth}>{\raggedright\arraybackslash}p{\QuizInnerAnswerW}@{\hspace{\QuizInnerPad}}}
-      % \cellcolor[HTML]{FFFFFF} %解説枠をより目立たせたい場合は
-      \begingroup\let\label\quiz@questionlabel\quiz@cellwithvspace{#1}\endgroup & \quiz@cellwithvspace{#2} \\
-      \cline{1-2}
-      \multicolumn{2}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\dimexpr\linewidth-2\QuizInnerPad+2\tabcolsep\relax}@{\hspace{\QuizInnerPad}}}{\begingroup\let\label\quiz@questionlabel\quiz@cellwithvspace{#3}\endgroup} \\
-    \end{tabular*}%
-  }%
-}
-
-\newcommand{\quiz@thickrule}{%
-  \specialrule{1.5pt}{0pt}{0pt}%
-}
-
-\newcommand{\quiz@rowrule}{%
-  \quiz@thickrule
-}
-
-\newcommand{\quiz@innerend}[1]{%
-  \makebox[\linewidth][l]{%
-    \hspace*{-\QuizInnerShift}%
-    \begin{tabular*}{\dimexpr\linewidth+\QuizInnerShift\relax}{@{\hspace{\QuizInnerPad}}>{\raggedright\arraybackslash}p{\QuizInnerQuestionW}>{\raggedleft\arraybackslash}p{\QuizInnerAnswerW}@{\hspace{\QuizInnerPad}}}
-      {} & #1 \\
-    \end{tabular*}%
-  }%
-}
-
-\newcommand{\quiz@endmarkerrow}[1]{%
-  \multicolumn{1}{>{\raggedleft\arraybackslash}p{\QuizNoW}}{}
-    & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}}{\quiz@innerend{#1}} \\
-}
-
-\newcommand{\quiz@numcell}{%
   \refstepcounter{question}%
+  \global\quiz@hasquestiontrue
   \xdef\quiz@lastquestion{\thequestion}%
   \protected@edef\@currentlabel{\quiz@lastquestion}%
-  \thequestion
-}
-
-\newcommand{\quiz@beforequestion}{%
-  \ifhmode
-    \unskip\par
+  \ifquiz@pendingsection
+    \quiz@setactivesection{\quiz@pendingsectiontitle}%
+    \quiz@ifblankTF{#3}{%
+      \quiz@blockrow@simple{\quiz@pendingsectiontitle}{\thequestion}{#1}{#2} \\
+    }{%
+      \quiz@blockrow@withcomment{\quiz@pendingsectiontitle}{\thequestion}{#1}{#2}{#3} \\
+    }%
+    \quiz@clearpendingsection
+  \else
+    \quiz@ifblankTF{#3}{%
+      \quiz@blockrow@simple{}{\thequestion}{#1}{#2} \\
+    }{%
+      \quiz@blockrow@withcomment{}{\thequestion}{#1}{#2}{#3} \\
+    }%
   \fi
 }
 
@@ -352,86 +372,84 @@
 % API
 % ====================
 
-\newcommand{\quizend}[1]{%
-  \ifquiz@open
-    \noalign{\vskip0pt}%
-    \quiz@endmarkerrow{#1}
-    \end{longtable}%
-    \quiz@restoretablemetrics
-    \quiz@openfalse
+\newcommand{\QuizSection}[1]{%
+  \ifquiz@open\else
     \setlength{\LTpre}{\medskipamount}%
+    \quiz@starttable
+  \fi
+  \quiz@setpendingsection{#1}%
+}
+
+\newcommand{\question}[3]{%
+  \ifquiz@open\else
+    \setlength{\LTpre}{\medskipamount}%
+    \quiz@starttable
+  \fi
+  \quiz@emitquestionblock{#1}{#2}{#3}%
+}
+
+\newcommand{\renumber}[1]{%
+  \ifstrempty{#1}{%
+    \global\quiz@renumberstart=1%
+  }{%
+    \ifnum\numexpr#1\relax<1
+      \global\quiz@renumberstart=1%
+    \else
+      \global\quiz@renumberstart=#1%
+    \fi
+  }%
+  \setcounter{question}{\numexpr\quiz@renumberstart-1\relax}%
+}
+
+\newcommand{\QuestionLabel}[1]{%
+  \ifquiz@hasquestion
+    \quiz@questionlabel{#1}%
+  \else
+    \PackageWarning{quizsheet}{\string\QuestionLabel called before first question; label `#1' ignored}%
   \fi
 }
+
+\newcommand{\QuestionRef}[1]{Q\ref{#1}}
+
+\newcommand{\QuestionPageRef}[1]{\pageref{#1}ページのQ\ref{#1}}
+
+\newcommand{\QuestionRangeRef}[2]{Q\ref{#1}〜Q\ref{#2}}
+
+\newcommand{\qref}[1]{\QuestionRef{#1}}
+
+\newcommand{\qpageref}[1]{\QuestionPageRef{#1}}
+
+\newcommand{\qrefrange}[2]{\QuestionRangeRef{#1}{#2}}
 
 \newcommand{\quizclose}{%
   \ifquiz@open
     \end{longtable}%
-    \global\quiz@lasttableclosepage=\numexpr\value{page}\relax
     \quiz@restoretablemetrics
-    \quiz@openfalse
+    \global\quiz@openfalse
+    \quiz@clearpendingsection
+    \quiz@clearactivesection
     \setlength{\LTpre}{\medskipamount}%
   \fi
 }
 
-%% section/subsectionを跨ぐ際は、問題表を閉じる（以上。は挿入しない）。
+\newcommand{\quizend}[1]{%
+  \ifquiz@open
+    \vspace{-\baselineskip}%
+    \makebox[\linewidth][r]{\small #1} \\
+    \end{longtable}%
+    \quiz@restoretablemetrics
+    \global\quiz@openfalse
+    \quiz@clearpendingsection
+    \quiz@clearactivesection
+    \setlength{\LTpre}{\medskipamount}%
+  \fi
+}
+
 \pretocmd{\clearpage}{\quizclose}{}{}
-\pretocmd{\section}{\quizclose\setcounter{question}{0}}{}{}
-\newcommand{\quiz@onsubsection}{%
-  \ifquiz@open
-    \quizclose
-  \fi
-}
-% \pretocmd{\subsection}{\quiz@onsubsection}{}{}
-% \pretocmd{\subsubsection}{\quiz@onsubsection}{}{}
+\pretocmd{\section}{\quizclose\quiz@clearpendingsection\quiz@clearactivesection\setcounter{question}{0}}{}{}
+\pretocmd{\subsection}{\quizclose\quiz@clearpendingsection\quiz@clearactivesection}{}{}
+\pretocmd{\subsubsection}{\quizclose\quiz@clearpendingsection\quiz@clearactivesection}{}{}
 
-\newcommand{\QuizSection}[1]{%
-  \ifquiz@open
-    \quizclose
-  \fi
-  % 残り領域が極端に少ない場合、実際の表開始は次ページになるため、
-  % 次ページ先頭でヘッダーを出せるようフラグを先行リセットする。
-  \ifdim\dimexpr\pagegoal-\pagetotal\relax<3\baselineskip
-    \global\quiz@pageheaderusedfalse
-  \fi
-  \quiz@detectnearpagetop
-  \ifquiz@nearpagetop
-    \global\quiz@pageheaderusedfalse
-  \fi
-  \setlength{\LTpre}{0pt}%
-  \quiz@starttable{#1}%
-}
+\AtEndDocument{\quizclose}
 
-% ====================
-% Question Counter Management
-% ====================
-\newcommand{\renumber}[1][]{%
-  \ifstrempty{#1}{%
-    % 引数なし：1問目から振り直す
-    \setcounter{question}{0}%
-  }{%
-    % 引数あり：指定番号から振り直す（1以上の整数）
-    \ifnum\numexpr#1\relax<1
-      \setcounter{question}{0}%
-    \else
-      \setcounter{question}{\numexpr#1-1\relax}%
-    \fi
-  }%
-}
-\newcommand{\question}[3]{%
-  \quiz@beforequestion
-  \ifquiz@open\else
-    \setlength{\LTpre}{\medskipamount}%
-    \quiz@starttable{}%
-  \fi
-  \ifstrempty{#3}{%
-    \multicolumn{1}{|>{\raggedleft\arraybackslash}p{\QuizNoW}||}{\quiz@numcell}
-      & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}|}{\quiz@innernoexp{#1}{#2}} \\
-    \quiz@rowrule
-  }{%
-    \multicolumn{1}{|>{\raggedleft\arraybackslash}p{\QuizNoW}||}{\quiz@numcell}
-      & \multicolumn{2}{>{\raggedright\arraybackslash}p{\QuizCommentW}|}{\quiz@innerwith{#1}{#2}{#3}} \\
-    \quiz@rowrule
-  }%
-}
-
-\AtEndDocument{\quizend{以上。}}
+\endinput

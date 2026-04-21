@@ -13,11 +13,10 @@
 \author{Xaghoja}
 \newcommand{\DocCopyright}{\textcopyright\ \the\year\ Xaghoja}
 \newcommand{\DocLicense}{MIT}
-\date{%
-    \today
-    \vfill
-    \small \DocCopyright\\
-    \small Licensed under the \DocLicense\ License.%
+\date{\today}
+\license{%
+    \footnotesize \DocCopyright\\
+    \footnotesize Licensed under the \DocLicense\ License.%
 }
 
 \begin{document}
@@ -47,7 +46,7 @@
     問題文
 }{
     \textbf{正解}\newline
-    \small{判定基準など。\newline
+    \footnotesize{判定基準など。\newline
         (丸括弧は 別解)\newline
         [\textit{角括弧}は もう一度]\newline
         \ensuremath{\langle}山括弧は その他\ensuremath{\rangle}
@@ -135,7 +134,7 @@
             }
             {
                 \textbf{ざいまる}界隈\newline
-                \small{[\textit{材料◯つ界隈}はもう一度]} %判定基準など
+                \footnotesize{[\textit{材料◯つ界隈}はもう一度]} %判定基準など
             }
             {
                 sm45645506 を参照されたい。なお、水は材料に入らないものとしている。
@@ -172,7 +171,7 @@
             }
             {
                 ｱｲﾄﾞﾙﾏｽﾀｰ \textbf{ｼﾝﾃﾞﾚﾗｶﾞｰﾙｽﾞ}\newline
-                \small{[\textit{デレマス}はもう一度]} %判定基準など
+                \footnotesize{[\textit{デレマス}はもう一度]} %判定基準など
             }
             {
                 2026年11月に15周年を迎えます。
@@ -194,7 +193,7 @@
             }
             {
                 \textbf{生年月日}\newline
-                \small{[\textit{年齢}はもう一度]} %判定基準など
+                \footnotesize{[\textit{年齢}はもう一度]} %判定基準など
             }
             {
                 トモコレ新生活の「相性テスターDX」でも必要。
@@ -208,7 +207,7 @@
             }
             {
                 \textbf{出ました}っ！\textbf{パワパフガールズZ}\newline
-                \small{[\textit{パワパフガールズZ}はもう一度]} %判定基準など
+                \footnotesize{[\textit{パワパフガールズZ}はもう一度]} %判定基準など
             }
             {
                 ちなみにゲーム化されているものの、クソゲーの烙印を押されている。
@@ -228,7 +227,7 @@
             {
                 %% 正解内の改行は \newline または \linebreak 推奨。
                 \textbf{\LaTeX}\newline
-                \small{（模範：ﾗﾃﾌ、ﾗﾃｯｸ、ﾗｰﾃｯｸ、ﾚｲﾃｯｸ、ﾚｲﾃｯｸｽ など）\newline
+                \footnotesize{（模範：ﾗﾃﾌ、ﾗﾃｯｸ、ﾗｰﾃｯｸ、ﾚｲﾃｯｸ、ﾚｲﾃｯｸｽ など）\newline
                 \ensuremath{\langle}読みが不定なので、どんな発音でも正解だが、
                 ボード回答の場合は\textbf{\LaTeX} または、\textbf{LaTeX}（大文字小文字が完全一致）と書かない限り
                 誤答とみなすのが適。\ensuremath{\rangle}}        
@@ -252,22 +251,12 @@
             }
             {
                 \textbf{問題文・正解・解説}やコメント\newline
-                \small{(問題・回答・補記)}
+                \footnotesize{(問題・回答・補記)}
             }
             {
                 ここに解説やコメントを記入。
             }
-            \question{
-                \TeX において、文章を段落内で意図的に改行させるために使うコマンドは\textbackslash\texttt{newline}ですが、
-                文章の冒頭にインデントをつけ加えて、段落を分けて改行させたいときに使うコマンドは何？
-            }
-            {
-                \textbackslash\textbf{\texttt{par}}
-                \small{(二重改行)}
-            }
-            {
-                二重バックスラッシュ（\textbackslash\textbackslash）はレイアウトが崩れるため使用不可。ごめんね。
-            }
+
             \question{
                 \textbf{【大意正解】}\par
                 このアシストツールを用いて問題集を作成する際に、
@@ -276,7 +265,9 @@
             {
                 \textbackslash\textbf{\texttt{question}コマンドの3番目の\ruby{引数}{ひきすう}に、何の文字列も挿入しない。}
             }
-            {} %←のように書いてください。
+            {
+                % このように書くか、{}と書いてください。
+            } 
 
             \question{
                 クイズ問題集を作るにあたって、欠番等の理由で問題番号を途中から変更したいときに使うコマンドは何？
@@ -294,7 +285,7 @@
             }
             {
                 \textbackslash\textbf{\texttt{label}}と\textbackslash\textbf{\texttt{ref}}
-                \small{\ensuremath{\langle}山括弧は その他\ensuremath{\rangle}}
+                \footnotesize{\ensuremath{\langle}山括弧は その他\ensuremath{\rangle}}
             }
             {
                 必ず第一引数に付けること。
@@ -312,17 +303,17 @@
                 その使用例は\pageref{nomal}ページの\ref{nomal}の通り。
             } 
 
-        \QuizSection{終わリの問題}
+        \QuizSection{終わりの問題}
             \question{
                 \label{q:Final}
                 これが最終問題です。このアシストツールを用いて全ての作問を終えた際につけると、「以上。」や\ruby{労}{ねぎら}いの言葉をつけることができ、
                 また、問題集の表の真下に後書きなどのコメントを記したいときに使うコマンドは何？
             }
             {
-                \textbackslash\textbf{\texttt{quizend}}
+                \textbf{\texttt{quizend}}
             }
             {
-                \textbackslash\texttt{quiz }\textbf{end}
+                \texttt{quiz }\textbf{end}
             }
 
 \quizend{以上。} ここにコメントなど書いたり、表の真下に一言つけて終わるときは、このように書いてください。
