@@ -247,7 +247,7 @@
 % ====================
 
 \newcommand{\quiz@tenptfont}{\fontsize{10pt}{12pt}\selectfont}
-\newcommand{\quiz@headercell}[1]{\quiz@tenptfont\bfseries #1}
+\newcommand{\quiz@headercell}[1]{\quiz@tenptfont\bfseries\rule{0pt}{12pt}#1}
 
 \newcommand{\quiz@headerblock}{%
   \begingroup
@@ -434,7 +434,7 @@
 
 \newcommand{\quizend}[1]{%
   \ifquiz@open
-    \vspace{-\baselineskip}%
+    \vspace{\the\dimexpr -\f@size pt-3pt\relax}%
     \makebox[\linewidth][r]{\small #1} \\
     \end{longtable}%
     \quiz@restoretablemetrics
