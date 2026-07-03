@@ -26,7 +26,9 @@
 \RequirePackage[table]{xcolor}
 \RequirePackage{multirow}
 \RequirePackage{url}
+\RequirePackage{ulem}
 \RequirePackage[version=3]{mhchem}
+\RequirePackage{tikz} % 追加: \Qexpコマンドのためのパッケージ
 
 % Fake slant amount used by \textit for Japanese glyphs.
 \newcommand{\QuizItalicFakeSlant}{0.25}
@@ -46,6 +48,18 @@
   \else
     \quiz@origtextit{#1}%
   \fi
+}
+
+\newcommand{\Qexp}[1]{%
+  \tikz[baseline=(char.base)]\node[
+    anchor=text,
+    fill=black,
+    text=white,
+    font=\bfseries,
+    rounded corners=3pt,
+    inner xsep=0.4em,
+    inner ysep=0.2em
+  ] (char) {#1};%
 }
 
 % longtable spacing
@@ -247,7 +261,7 @@
 % ====================
 
 \newcommand{\quiz@tenptfont}{\fontsize{10pt}{12pt}\selectfont}
-\newcommand{\quiz@headercell}[1]{\quiz@tenptfont\bfseries\rule{0pt}{12pt}#1}
+\newcommand{\quiz@headercell}[1]{\quiz@tenptfont\bfseries #1}
 
 \newcommand{\quiz@headerblock}{%
   \begingroup
@@ -434,7 +448,7 @@
 
 \newcommand{\quizend}[1]{%
   \ifquiz@open
-    \vspace{\the\dimexpr -\f@size pt\relax}%
+    \vspace{-\baselineskip}%
     \makebox[\linewidth][r]{\small #1} \\
     \end{longtable}%
     \quiz@restoretablemetrics
